@@ -3,15 +3,38 @@ import ReactDOM from 'https://unpkg.com/react-dom@18/umd/react-dom.development.j
 
 const { createRoot } = ReactDOM
 
-// Simple router using hash
+// Router supporting both pathname and hash. Uses history API for navigation.
 function useRouter(){
-  const [route, setRoute] = useState(window.location.hash.slice(1) || '/')
+  const getRoute = () => {
+    // prefer pathname if it's not the root; fallback to hash
+    const p = window.location.pathname || '/'
+    if(p && p !== '/' && p !== '/index.html') return p
+    const h = window.location.hash.slice(1)
+    return h ? h : '/'
+  }
+
+  const [route, setRoute] = useState(getRoute)
+
   useEffect(()=>{
-    const onHash = () => setRoute(window.location.hash.slice(1) || '/')
-    window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
+    const onPop = () => setRoute(getRoute())
+    window.addEventListener('popstate', onPop)
+    window.addEventListener('hashchange', onPop)
+    return () => { window.removeEventListener('popstate', onPop); window.removeEventListener('hashchange', onPop) }
   },[])
-  const push = (path) => { window.location.hash = path }
+
+  const push = (path) => {
+    if(!path) path = '/'
+    // if path starts with '#', set hash
+    if(path.startsWith('#')){
+      window.location.hash = path.slice(1)
+      setRoute(path.slice(1) || '/')
+      return
+    }
+    // use history API to update URL without reload
+    try{ window.history.pushState({}, '', path) }catch(e){ window.location.hash = path }
+    setRoute(path)
+  }
+
   return { route, push }
 }
 
@@ -49,15 +72,15 @@ function useData(){ const ctx = useContext(DataContext); if(!ctx) throw new Erro
 
 // Components
 function Nav(){
-  const { route, push } = useRouter()
+  const { push } = useRouter()
   return (
     React.createElement('header', { className: 'site-nav' },
       React.createElement('div', { className: 'site-nav-inner' },
-        React.createElement('a', { className: 'brand', href: '#/' , onClick: (e)=>{ e.preventDefault(); push('/') }}, 'FitTrack'),
+        React.createElement('a', { className: 'brand', href: '/', onClick: (e)=>{ e.preventDefault(); push('/') }}, 'FitTrack'),
         React.createElement('nav', { className: 'nav-links' },
-          React.createElement('a', { className: 'nav-link', href: '#/', onClick: (e)=>{ e.preventDefault(); push('/') }}, 'Home'),
-          React.createElement('a', { className: 'nav-link', href: '#/signup', onClick: (e)=>{ e.preventDefault(); push('/signup') }}, 'Sign Up'),
-          React.createElement('a', { className: 'nav-link', href: '#/dashboard', onClick: (e)=>{ e.preventDefault(); push('/dashboard') }}, 'Dashboard')
+          React.createElement('a', { className: 'nav-link', href: '/', onClick: (e)=>{ e.preventDefault(); push('/') }}, 'Home'),
+          React.createElement('a', { className: 'nav-link', href: '/signup', onClick: (e)=>{ e.preventDefault(); push('/signup') }}, 'Sign Up'),
+          React.createElement('a', { className: 'nav-link', href: '/dashboard', onClick: (e)=>{ e.preventDefault(); push('/dashboard') }}, 'Dashboard')
         )
       )
     )
