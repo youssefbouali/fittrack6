@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FitTrack — Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="app-root">
+    <header class="dashboard-header">
+      <div>
+        <h2 class="dashboard-title">Dashboard</h2>
+        <p class="dashboard-sub">Manage your activities (stored in your browser)</p>
+      </div>
+      <div class="user-actions">
+        <span id="userEmail" class="user-email">Guest</span>
+        <button id="logout" class="btn-ghost">Logout</button>
+        <a class="back-link" href="/">Home</a>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="panel">
+        <h3 class="panel-title">Add Activity</h3>
+        <form id="activityForm" class="form">
+          <label class="label">Type
+            <select id="type" class="select">
+              <option>Course</option>
+              <option>Marche</option>
+              <option>Vélo</option>
+              <option>Natation</option>
+              <option>Gym</option>
+            </select>
+          </label>
+          <label class="label">Date
+            <input id="date" class="input" type="date" required />
+          </label>
+          <label class="label">Durée (minutes)
+            <input id="duration" class="input" type="number" min="0" required />
+          </label>
+          <label class="label">Distance (km)
+            <input id="distance" class="input" type="number" step="0.01" min="0" />
+          </label>
+          <label class="label">Photo
+            <input id="photo" class="input" type="file" accept="image/*" />
+          </label>
+          <div class="form-actions">
+            <button class="btn-primary" type="submit">Add</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">Your Activities</h3>
+        <div id="activitiesRoot"></div>
+      </div>
+    </section>
+
+    <footer class="app-footer">© FitTrack</footer>
+
+    <script>
+      // Simple DataContext using localStorage
+      const KEY = 'fittrack:data:v1'
+      function load(){ try{ return JSON.parse(localStorage.getItem(KEY) || '{}') }catch(e){ return {} } }
+      function save(d){ localStorage.setItem(KEY, JSON.stringify(d)) }
+
+      function getCurrentUser(){ return (load().currentUser) || null }
+      function setCurrentUser(u){ const d = load(); d.currentUser = u; save(d) }
+
+      function initStorage(){ const d = load(); if(!d.activities) d.activities = []; save(d); }
+      function addActivity(act){ const d = load(); d.activities.unshift(act); save(d); renderList(); }
+      function deleteActivity(id){ const d = load(); d.activities = d.activities.filter(a => a.id !== id); save(d); renderList(); }
+
+      function renderList(){ const root = document.getElementById('activitiesRoot'); const d = load(); const user = getCurrentUser();
+        const list = d.activities.filter(a => !a.owner || (user && a.owner === user.id));
+        if(!list || list.length === 0){ root.innerHTML = '<p class="muted">No activities yet.</p>'; return }
+        root.innerHTML = '<ul class="activity-list">' + list.map(a => `\
+          <li class="activity-item">\
+            <div class="activity-main">\
+              <div>\
+                <div class="activity-type">${a.type}</div>\
+                <div class="activity-meta">${a.date} • ${a.duration} min • ${a.distance || 0} km</div>\
+              </div>\
+              <div class="activity-actions">\
+                <button class="btn-ghost" data-id="${a.id}">Delete</button>\
+              </div>\
+            </div>\
+            ${a.photo ? `<img class="activity-photo" src="${a.photo}" alt="activity" />` : ''}\
+          </li>`).join('') + '</ul>'
+
+        // attach delete handlers
+        root.querySelectorAll('button[data-id]').forEach(btn => btn.addEventListener('click', ()=> deleteActivity(btn.dataset.id)))
+      }
+
+      // init
+      initStorage();
+      const cur = getCurrentUser();
+      document.getElementById('userEmail').textContent = cur ? cur.email : 'Guest';
+
+      document.getElementById('logout').addEventListener('click', ()=>{
+        setCurrentUser(null);
+        document.getElementById('userEmail').textContent = 'Guest';
+        renderList();
+      })
+
+      // form handling with file -> base64
+      const form = document.getElementById('activityForm')
+      document.getElementById('photo').addEventListener('change', async (e)=>{
+        const file = e.target.files?.[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = () => { e.target.dataset.base = reader.result }
+        reader.readAsDataURL(file)
+      })
+
+      form.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const user = getCurrentUser();
+        const type = document.getElementById('type').value;
+        const date = document.getElementById('date').value;
+        const duration = Number(document.getElementById('duration').value || 0);
+        const distance = Number(document.getElementById('distance').value || 0);
+        const photo = document.getElementById('photo').dataset.base || null;
+        if(!date || !duration){ alert('Date and duration required'); return }
+        const act = { id: 'a_' + Math.random().toString(36).slice(2,9), type, date, duration, distance, photo, owner: user ? user.id : null, createdAt: new Date().toISOString() }
+        addActivity(act);
+        form.reset(); delete document.getElementById('photo').dataset.base;
+      })
+
+      renderList();
+    </script>
+  </main>
+</body>
+</html>
