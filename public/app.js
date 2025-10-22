@@ -26,9 +26,13 @@ function useRouter(){
     if(path.startsWith('#')){
       window.location.hash = path.slice(1)
       setRoute(path.slice(1) || '/')
+      // notify other router instances
+      window.dispatchEvent(new Event('popstate'))
       return
     }
     try{ window.history.pushState({}, '', path) }catch(e){ window.location.hash = path }
+    // notify other router instances to update
+    window.dispatchEvent(new Event('popstate'))
     setRoute(path)
   }
 
