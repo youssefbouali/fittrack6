@@ -473,7 +473,8 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
 
   depends_on = [
     aws_db_instance.fittrack,
-    aws_iam_instance_profile.elastic_beanstalk_ec2
+    aws_iam_instance_profile.elastic_beanstalk_ec2,
+    aws_security_group.elastic_beanstalk   # تمت الإضافة
   ]
 }
 
