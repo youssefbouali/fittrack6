@@ -1,5 +1,5 @@
 resource "aws_cognito_user_pool" "fittrack" {
-  name = "${var.app_name}-${var.environment}-pool-v2"
+  name = "${var.app_name}-${var.environment}-pool-v3"
 
   password_policy {
     minimum_length    = var.cognito_password_min_length
