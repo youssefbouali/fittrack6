@@ -48,8 +48,7 @@ resource "aws_db_instance" "fittrack" {
   publicly_accessible     = false
 
   skip_final_snapshot       = false
-  final_snapshot_identifier = "${var.app_name}-${var.environment}-final-snapshot"
-
+  final_snapshot_identifier = "${var.app_name}-${var.environment}-final-snapshot-${formatdate("YYYY-MM-DD-hhmmss", timestamp())}"
 
   tags = var.tags
 
