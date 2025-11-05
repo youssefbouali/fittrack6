@@ -503,7 +503,7 @@ resource "aws_elastic_beanstalk_application" "fittrack" {
 resource "aws_elastic_beanstalk_environment" "fittrack" {
   name                = "${var.app_name}-${var.environment}-env"
   application         = aws_elastic_beanstalk_application.fittrack.name
-  solution_stack_name = "64bit Amazon Linux 2 v3.6.3 running Node.js 18"
+  solution_stack_name = "64bit Amazon Linux 2023 v6.6.8 running Node.js 20"
 
   # Environment Variables
   setting {
