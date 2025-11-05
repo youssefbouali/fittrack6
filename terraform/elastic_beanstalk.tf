@@ -1,3 +1,86 @@
+##################################################
+# Security Group for Elastic Beanstalk
+##################################################
+resource "aws_security_group" "elastic_beanstalk" {
+  name        = "${var.app_name}-${var.environment}-eb-sg"
+  description = "Security group for Elastic Beanstalk"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = var.tags
+}
+
+##################################################
+# IAM Role & Instance Profile for EC2
+##################################################
+resource "aws_iam_role" "elastic_beanstalk_ec2" {
+  name = "${var.app_name}-${var.environment}-eb-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "eb_web_tier" {
+  role       = aws_iam_role.elastic_beanstalk_ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
+}
+
+resource "aws_iam_role_policy_attachment" "eb_worker_tier" {
+  role       = aws_iam_role.elastic_beanstalk_ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWorkerTier"
+}
+
+resource "aws_iam_role_policy_attachment" "eb_ssm" {
+  role       = aws_iam_role.elastic_beanstalk_ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "elastic_beanstalk_ec2" {
+  name = "${var.app_name}-${var.environment}-eb-ec2-profile"
+  role = aws_iam_role.elastic_beanstalk_ec2.name
+}
+
+##################################################
+# Elastic Beanstalk Application
+##################################################
+resource "aws_elastic_beanstalk_application" "fittrack" {
+  name        = "${var.app_name}-${var.environment}"
+  description = "FitTrack application"
+
+  tags = var.tags
+}
+
+##################################################
+# Elastic Beanstalk Environment
+##################################################
 resource "aws_elastic_beanstalk_environment" "fittrack" {
   name        = "${var.app_name}-${var.environment}-env"
   application = aws_elastic_beanstalk_application.fittrack.name
@@ -14,7 +97,7 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "SecurityGroups"
-    value     = join(",", [aws_security_group.elastic_beanstalk.id])
+    value     = aws_security_group.elastic_beanstalk.id
   }
 
   # Environment type
