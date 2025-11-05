@@ -402,7 +402,7 @@ resource "aws_elastic_beanstalk_application" "fittrack" {
 
 # تم إصلاح: name + DATABASE_URL + VPC settings
 resource "aws_elastic_beanstalk_environment" "fittrack" {
-  name                = "${var.app_name}-${var.environment}-env"  # تم الإصلاح
+  name                = "${var.app_name}-${var.environment}-env"
   application         = aws_elastic_beanstalk_application.fittrack.name
   solution_stack_name = "64bit Amazon Linux 2023 v6.6.8 running Node.js 20"
 
@@ -435,7 +435,7 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "DATABASE_URL"
-    value     = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.fittrack.endpoint}/${aws_db_instance.fittrack.db_name}"  # تم الإصلاح
+    value     = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.fittrack.endpoint}/${aws_db_instance.fittrack.db_name}"
   }
 
   # IAM
@@ -445,11 +445,16 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
     value     = aws_iam_instance_profile.elastic_beanstalk_ec2.name
   }
 
-  # VPC Configuration (AL2023 - الصحيح)
+  # VPC Configuration (AL2023 - الصحيح 100%)
   setting {
     namespace = "aws:ec2:vpc"
     name      = "VPCId"
     value     = aws_vpc.main.id
+  }
+  setting {
+    namespace = "aws:ec2:vpc"
+    name      = "Subnets"
+    value     = join(",", aws_subnet.public[*].id)
   }
   setting {
     namespace = "aws:ec2:vpc"
@@ -474,7 +479,7 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
   depends_on = [
     aws_db_instance.fittrack,
     aws_iam_instance_profile.elastic_beanstalk_ec2,
-    aws_security_group.elastic_beanstalk   # تمت الإضافة
+    aws_security_group.elastic_beanstalk
   ]
 }
 
