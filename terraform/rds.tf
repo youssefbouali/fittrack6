@@ -5,6 +5,37 @@ resource "aws_db_subnet_group" "fittrack" {
   tags = var.tags
 }
 
+
+# Add this to rds.tf before the RDS security group
+data "aws_security_group" "elastic_beanstalk" {
+  name = "${var.app_name}-${var.environment}-eb-sg"
+  
+  depends_on = [aws_security_group.elastic_beanstalk]
+}
+
+# Then update the RDS security group reference:
+resource "aws_security_group" "rds" {
+  name        = "${var.app_name}-${var.environment}-rds-sg"
+  description = "Security group for RDS"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [data.aws_security_group.elastic_beanstalk.id]  # Changed to data source
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = var.tags
+}
+
 resource "aws_security_group" "rds" {
   name        = "${var.app_name}-${var.environment}-rds-sg"
   description = "Security group for RDS"
