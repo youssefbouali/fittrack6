@@ -171,9 +171,12 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
 
   tags = var.tags
 
+  
   depends_on = [
     aws_elastic_beanstalk_application.fittrack,
     aws_db_instance.fittrack,
-    aws_security_group.elastic_beanstalk
+    aws_security_group.elastic_beanstalk,  # Ensure this is included
+    aws_iam_instance_profile.elastic_beanstalk_ec2,
+    aws_db_subnet_group.fittrack
   ]
 }
