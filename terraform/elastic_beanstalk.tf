@@ -74,26 +74,24 @@ resource "aws_iam_instance_profile" "elastic_beanstalk_ec2" {
 resource "aws_elastic_beanstalk_application" "fittrack" {
   name        = "${var.app_name}-${var.environment}"
   description = "FitTrack application"
-
-  tags = var.tags
+  tags        = var.tags
 }
 
 ##################################################
 # Elastic Beanstalk Environment
 ##################################################
 resource "aws_elastic_beanstalk_environment" "fittrack" {
-  name        = "${var.app_name}-${var.environment}-env"
-  application = aws_elastic_beanstalk_application.fittrack.name
+  name                = "${var.app_name}-${var.environment}-env"
+  application         = aws_elastic_beanstalk_application.fittrack.name
   solution_stack_name = "64bit Amazon Linux 2023 v6.6.7 running Node.js 20"
 
-  # Instance profile
+  # Instance profile & Security Group (Launch Configuration)
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "IamInstanceProfile"
     value     = aws_iam_instance_profile.elastic_beanstalk_ec2.name
   }
 
-  # Security Groups (launch configuration)
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "SecurityGroups"
@@ -127,17 +125,11 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
     value     = "3"
   }
 
-  # VPC configuration
+  # VPC Subnets for Load Balancer (Security Group فقط في Launch Config)
   setting {
     namespace = "aws:elbv2:loadbalancer"
     name      = "Subnets"
     value     = join(",", aws_subnet.public[*].id)
-  }
-
-  setting {
-    namespace = "aws:elbv2:loadbalancer"
-    name      = "SecurityGroups"
-    value     = aws_security_group.elastic_beanstalk.id
   }
 
   # Environment variables
