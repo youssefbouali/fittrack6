@@ -513,10 +513,10 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
   ]
 }
 
-output "elastic_beanstalk_endpoint" {
-  value       = aws_elastic_beanstalk_environment.fittrack.endpoint_url
-  description = "Elastic Beanstalk environment endpoint"
-}
+#output "elastic_beanstalk_endpoint" {
+#  value       = aws_elastic_beanstalk_environment.fittrack.endpoint_url
+#  description = "Elastic Beanstalk environment endpoint"
+#}
 locals {
   app_name_lower = lower(var.app_name)
   common_tags = merge(
