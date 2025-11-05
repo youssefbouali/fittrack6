@@ -501,7 +501,7 @@ resource "aws_elastic_beanstalk_application" "fittrack" {
 }
 
 resource "aws_elastic_beanstalk_environment" "fittrack" {
-  name                = "${var.app_name}-${var.environment}-env"
+  name                = "$$ {var.app_name}- $${var.environment}-env"
   application         = aws_elastic_beanstalk_application.fittrack.name
   solution_stack_name = "64bit Amazon Linux 2023 v6.6.8 running Node.js 20"
 
@@ -534,7 +534,7 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "DATABASE_URL"
-    value     = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.fittrack.endpoint}/${aws_db_instance.fittrack.db_name}"
+    value     = "postgresql://$$ {var.db_username}: $${var.db_password}@$$ {aws_db_instance.fittrack.endpoint}/ $${aws_db_instance.fittrack.db_name}"
   }
 
   # IAM
@@ -544,13 +544,7 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
     value     = aws_iam_instance_profile.elastic_beanstalk_ec2.name
   }
 
-  # VPC Configuration
-  setting {
-    namespace = "aws:ec2:vpc"
-    name      = "VPCId"
-    value     = aws_vpc.main.id
-  }
-  # VPC Configuration (AL2023)
+  # VPC Configuration (AL2023 - الصحيح)
   setting {
     namespace = "aws:ec2:vpc"
     name      = "VPCId"
@@ -562,10 +556,12 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
     value     = join(",", aws_subnet.public[*].id)
   }
   setting {
-    namespace = "aws:ec2:instances"
+    namespace = "aws:ec2:vpc"
     name      = "AssociatePublicIpAddress"
     value     = "true"
   }
+
+  # Security Group
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "SecurityGroups"
