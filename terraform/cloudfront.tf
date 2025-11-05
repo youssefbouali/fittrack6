@@ -31,23 +31,21 @@ resource "aws_cloudfront_distribution" "frontend" {
     max_ttl                = 86400
   }
 
-  # Cache behavior for /api/* - pass through to backend
+  # In cloudfront.tf, replace the ordered_cache_behavior for /api/* with:
   ordered_cache_behavior {
     path_pattern     = "/api/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "S3Frontend"
-
+  
     forwarded_values {
       query_string = true
-      headers {
-        header_names = ["Authorization", "Content-Type"]
-      }
+      headers      = ["Authorization", "Content-Type"]  # Fixed: use argument, not block
       cookies {
         forward = "all"
       }
     }
-
+  
     viewer_protocol_policy = "https-only"
     min_ttl                = 0
     default_ttl            = 0

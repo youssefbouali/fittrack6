@@ -87,10 +87,11 @@ resource "aws_iam_instance_profile" "elastic_beanstalk_ec2" {
   role = aws_iam_role.elastic_beanstalk_ec2.name
 }
 
+# In elastic_beanstalk.tf, replace the aws_elastic_beanstalk_application resource with:
 resource "aws_elastic_beanstalk_application" "fittrack" {
-  name            = "${var.app_name}-${var.environment}"
-  description     = "FitTrack application"
-  service_role    = aws_iam_role.elastic_beanstalk_service.arn
+  name        = "${var.app_name}-${var.environment}"
+  description = "FitTrack application"
+  # Remove the service_role line
 
   tags = var.tags
 }

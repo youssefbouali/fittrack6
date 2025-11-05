@@ -82,10 +82,11 @@ resource "aws_cognito_identity_pool" "fittrack" {
   identity_pool_name             = "${var.app_name}_${var.environment}_identity_pool"
   allow_unauthenticated_identities = false
 
+  # In cognito.tf, replace the cognito_identity_providers block with:
   cognito_identity_providers {
-    client_id              = aws_cognito_user_pool_client.fittrack_web.id
-    provider_name          = aws_cognito_user_pool.fittrack.endpoint
-    server_side_token_validation = false
+    client_id     = aws_cognito_user_pool_client.fittrack_web.id
+    provider_name = aws_cognito_user_pool.fittrack.endpoint
+    # Remove the server_side_token_validation line
   }
 
   depends_on = [aws_cognito_user_pool.fittrack, aws_cognito_user_pool_client.fittrack_web]
