@@ -485,82 +485,22 @@ resource "aws_elastic_beanstalk_environment" "fittrack" {
 
 
 # ========================================
-# CloudFront Cache & Origin Request Policies
+# CloudFront Managed Policies (استيراد من AWS)
 # ========================================
-resource "aws_cloudfront_cache_policy" "caching_optimized" {
-  name        = "Managed-CachingOptimized"
-  comment     = "AWS Managed CachingOptimized Policy"
-  default_ttl = 86400
-  max_ttl     = 31536000
-  min_ttl     = 1
-
-  parameters_in_cache_key_and_forwarded_to_origin {
-    cookies_config {
-      cookie_behavior = "none"
-    }
-    headers_config {
-      header_behavior = "none"
-    }
-    query_strings_config {
-      query_string_behavior = "none"
-    }
-  }
+data "aws_cloudfront_cache_policy" "caching_optimized" {
+  name = "Managed-CachingOptimized"
 }
 
-resource "aws_cloudfront_cache_policy" "caching_disabled" {
-  name        = "Managed-CachingDisabled"
-  comment     = "AWS Managed CachingDisabled Policy"
-  default_ttl = 0
-  max_ttl     = 0
-  min_ttl     = 0
-
-  parameters_in_cache_key_and_forwarded_to_origin {
-    cookies_config {
-      cookie_behavior = "all"
-    }
-    headers_config {
-      header_behavior = "whitelist"
-      headers {
-        items = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
-      }
-    }
-    query_strings_config {
-      query_string_behavior = "all"
-    }
-  }
+data "aws_cloudfront_cache_policy" "caching_disabled" {
+  name = "Managed-CachingDisabled"
 }
 
-resource "aws_cloudfront_origin_request_policy" "all_viewer" {
-  name    = "Managed-AllViewer"
-  comment = "AWS Managed AllViewer Policy"
-
-  cookies_config {
-    cookie_behavior = "all"
-  }
-  headers_config {
-    header_behavior = "allViewer"
-  }
-  query_strings_config {
-    query_string_behavior = "all"
-  }
+data "aws_cloudfront_origin_request_policy" "all_viewer" {
+  name = "Managed-AllViewer"
 }
 
-resource "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
-  name    = "Managed-AllViewerExceptHostHeader"
-  comment = "AWS Managed AllViewerExceptHostHeader Policy"
-
-  cookies_config {
-    cookie_behavior = "all"
-  }
-  headers_config {
-    header_behavior = "allExcept"
-    headers {
-      items = ["Host"]
-    }
-  }
-  query_strings_config {
-    query_string_behavior = "all"
-  }
+data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
+  name = "Managed-AllViewerExceptHostHeader"
 }
 
 # ========================================
@@ -610,8 +550,8 @@ resource "aws_cloudfront_distribution" "frontend" {
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "ElasticBeanstalkAPI"
 	
-    cache_policy_id          = aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id = aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+	cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
 	
     viewer_protocol_policy = "https-only"
     min_ttl = 0
@@ -624,8 +564,8 @@ resource "aws_cloudfront_distribution" "frontend" {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "S3Frontend"
-    cache_policy_id  = "658327ea-f89d-4fab-a63d-7e88639e58f6"
-    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
+	cache_policy_id          = data.aws_cloudfront_cache_policy.caching_optimized.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
     viewer_protocol_policy = "https-only"
     min_ttl = 31536000
     default_ttl = 31536000
