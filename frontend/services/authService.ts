@@ -27,12 +27,17 @@ export const AuthService = {
   const result = await Auth.signUp({
     username,
     password: credentials.password,
-    attributes: { 
-      email: credentials.email,
-    },
-  } as any); 
-  return { userId: result.userSub, userSub: result.userSub };
+    attributes: { email: credentials.email },
+  } as any);
+
+  const userSub = (result.user as any)?.username || username;
+
+  return {
+    userId: userSub,
+    userSub: userSub,
+  };
 }
+
 
 
   async signin(credentials: { username: string; password: string }): Promise<{ user: User; accessToken: string; idToken: string }> {
