@@ -61,14 +61,23 @@ export const AuthService = {
   },
   
   
-  async confirmSignup(credentials: { username: string; code: string }): Promise<{ userSub: string }> {
-  await Auth.confirmSignUp({
-    username: credentials.username,
-    code: credentials.code,
-  } as any);
+  async confirmSignup(credentials: { username: string; code: string }): Promise<{ user: User; accessToken: string; idToken: string }> {
+  const { username, code } = credentials;
+  await Auth.confirmSignUp(username, code);
 
-  return { userSub: credentials.username };
+  const result: any = await Auth.signIn(username, credentials.code); 
+  const session = result.getSignInUserSession();
+  
+  const user: User = {
+    id: session.idToken.payload.sub,
+    email: session.idToken.payload.email,
+    username: result.getUsername(),
+    name: session.idToken.payload.name,
+  };
+
+  return { user, accessToken: session.accessToken.jwtToken, idToken: session.idToken.jwtToken };
 },
+
 
 
   async signout(): Promise<void> {
