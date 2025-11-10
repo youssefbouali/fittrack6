@@ -14,9 +14,10 @@ export const initializeAuth = (config: {
       userPoolWebClientId: config.clientId,
       identityPoolId: process.env.NEXT_PUBLIC_IDENTITY_POOL_ID,
       authenticationFlowType: 'USER_PASSWORD_AUTH',
-    },
+    } as any,
   });
 };
+
 
 
 export const AuthService = {
