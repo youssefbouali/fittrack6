@@ -36,9 +36,9 @@ export class ActivitiesService {
     });
   }
 
-  async getActivitiesByUser(userId: string): Promise<Activity[]> {
+  async getActivitiesByUser(_userId: string): Promise<Activity[]> {
     return this.prisma.activity.findMany({
-      where: { ownerId: userId },
+      where: { ownerId: _userId },
       orderBy: { createdAt: 'desc' },
     });
   }
