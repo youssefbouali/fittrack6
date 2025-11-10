@@ -1,8 +1,6 @@
 import { Amplify } from 'aws-amplify';
 import Auth from '@aws-amplify/auth';
-import { User } from '../store/slices/authSlice';
 
-// Configure Amplify with Cognito
 export const initializeAuth = (config: {
   region: string;
   userPoolId: string;
@@ -10,13 +8,16 @@ export const initializeAuth = (config: {
 }) => {
   Amplify.configure({
     Auth: {
+      mandatorySignIn: true,
       region: config.region,
       userPoolId: config.userPoolId,
       userPoolWebClientId: config.clientId,
       identityPoolId: process.env.NEXT_PUBLIC_IDENTITY_POOL_ID,
+      authenticationFlowType: 'USER_PASSWORD_AUTH',
     },
   });
 };
+
 
 export const AuthService = {
   async signup(credentials: { email: string; password: string; username?: string }): Promise<{ userId: string; userSub: string }> {
