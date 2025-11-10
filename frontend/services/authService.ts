@@ -2,10 +2,7 @@ import { Amplify } from 'aws-amplify';
 import Auth from '@aws-amplify/auth';
 import type { User } from '../store/slices/authSlice';
 
-
 type CognitoUser = any;
-
-
 
 export const initializeAuth = (config: {
   region: string;
@@ -27,7 +24,7 @@ export const initializeAuth = (config: {
 export const AuthService = {
   async signup(credentials: { email: string; password: string; username?: string }): Promise<{ userId: string; userSub: string }> {
     const username = credentials.username || credentials.email;
-    const result = await AmplifyAuth.signUp({
+    const result = await Auth.signUp({  // استخدم Auth مباشرة
       username,
       password: credentials.password,
       attributes: { email: credentials.email },
@@ -36,7 +33,7 @@ export const AuthService = {
   },
 
   async signin(credentials: { username: string; password: string }): Promise<{ user: User; accessToken: string; idToken: string }> {
-    const result: CognitoUser = await AmplifyAuth.signIn(credentials.username, credentials.password);
+    const result: CognitoUser = await Auth.signIn(credentials.username, credentials.password); // هنا أيضاً
     const session = result.getSignInUserSession();
 
     const user: User = {
@@ -53,14 +50,14 @@ export const AuthService = {
   },
 
   async signout(): Promise<void> {
-    await AmplifyAuth.signOut();
+    await Auth.signOut();  // هنا أيضاً
     localStorage.removeItem('auth_token');
     localStorage.removeItem('id_token');
   },
 
   async getCurrentUser(): Promise<User | null> {
     try {
-      const cognitoUser = await AmplifyAuth.currentAuthenticatedUser();
+      const cognitoUser = await Auth.currentAuthenticatedUser();
       const session = cognitoUser.getSignInUserSession();
       return {
         id: session.idToken.payload.sub,
@@ -75,7 +72,7 @@ export const AuthService = {
 
   async getAccessToken(): Promise<string | null> {
     try {
-      const session = await AmplifyAuth.currentSession();
+      const session = await Auth.currentSession();
       return session.getAccessToken().getJwtToken();
     } catch {
       return null;
@@ -84,7 +81,7 @@ export const AuthService = {
 
   async getIdToken(): Promise<string | null> {
     try {
-      const session = await AmplifyAuth.currentSession();
+      const session = await Auth.currentSession();
       return session.getIdToken().getJwtToken();
     } catch {
       return null;
