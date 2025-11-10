@@ -68,7 +68,7 @@ export const AuthService = {
   } as any);
 
   return { userSub: credentials.username };
-}
+},
 
 
   async signout(): Promise<void> {
