@@ -22,21 +22,22 @@ export const initializeAuth = (config: {
 };
 
 export const AuthService = {
+  
   async signup(credentials: { email: string; password: string; username?: string }): Promise<{ userId: string; userSub: string }> {
   const username = credentials.username || credentials.email;
-  const result = await Auth.signUp({
+  
+  await Auth.signUp({
     username,
     password: credentials.password,
     attributes: { email: credentials.email },
   } as any);
 
-  const userSub = (result.user as any)?.username || username;
-
   return {
-    userId: userSub,
-    userSub: userSub,
+    userId: username,
+    userSub: username,
   };
 }
+
 
 
 
