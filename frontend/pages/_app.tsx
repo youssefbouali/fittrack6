@@ -11,6 +11,7 @@ export default function App({ Component, pageProps }: AppProps) {
   const [isAmplifyConfigured, setAmplifyConfigured] = useState(false);
 
   useEffect(() => {
+  if (typeof window !== "undefined") {
     validateAwsConfig();
 
     Amplify.configure({
@@ -19,20 +20,19 @@ export default function App({ Component, pageProps }: AppProps) {
         userPoolId: awsConfig.userPoolId,
         userPoolWebClientId: awsConfig.clientId,
         identityPoolId: awsConfig.identityPoolId,
-      } as any,
+      },
       Storage: {
         region: awsConfig.region,
         bucket: awsConfig.s3Bucket,
         identityPoolId: awsConfig.identityPoolId,
-      } as any,
+      },
     });
-
-    setAmplifyConfigured(true);
 
     const checkAuth = async () => {
       try {
         const user = await AuthService.getCurrentUser();
         if (user) {
+          // User is logged in
         }
       } catch (error) {
         console.error(error);
@@ -40,7 +40,9 @@ export default function App({ Component, pageProps }: AppProps) {
     };
 
     checkAuth();
-  }, []);
+  }
+}, []);
+
 
   if (!isAmplifyConfigured) return null; 
 
