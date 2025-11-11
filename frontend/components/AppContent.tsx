@@ -1,4 +1,3 @@
-// components/AppContent.tsx
 import { useEffect, useState } from 'react';
 import { Amplify } from 'aws-amplify';
 import { awsConfig, validateAwsConfig } from '../config/aws';
@@ -16,13 +15,13 @@ export default function AppContent({ Component, pageProps }: any) {
       Auth: {
         region: awsConfig.region,
         userPoolId: awsConfig.userPoolId,
-        userPoolWebClientId: awsConfig.clientId,
-        identityPoolId: awsConfig.identityPoolId,
+        userPoolWebClientId: awsConfig.clientId, 
+        identityPoolId: awsConfig.identityPoolId || undefined,
       },
       Storage: {
         region: awsConfig.region,
         bucket: awsConfig.s3Bucket,
-        identityPoolId: awsConfig.identityPoolId,
+        identityPoolId: awsConfig.identityPoolId || undefined,
       },
     });
 
