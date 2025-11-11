@@ -1,40 +1,28 @@
 import { useEffect, useState } from 'react';
-import { Amplify } from 'aws-amplify';
 import { awsConfig, validateAwsConfig } from '../config/aws';
-import { AuthService } from '../services/authService';
+import { AuthService, initializeCognito } from '../services/authService';
+import { initializeS3 } from '../services/s3Service';
 
 export default function AppContent({ Component, pageProps }: any) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-  if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return;
 
-  if (!validateAwsConfig()) {
-    console.error('AWS config is incomplete. Amplify not configured.');
-    return;
-  }
+    if (!validateAwsConfig()) {
+      console.error('AWS config is incomplete. Services not initialized.');
+      return;
+    }
 
-  Amplify.configure({
-    Auth: {
-      region: awsConfig.region,
-      userPoolId: awsConfig.userPoolId,
-      userPoolWebClientId: awsConfig.clientId,
-      identityPoolId: awsConfig.identityPoolId,
-    },
-    Storage: {
-      region: awsConfig.region,
-      bucket: awsConfig.s3Bucket,
-      identityPoolId: awsConfig.identityPoolId,
-    },
-  });
+    initializeCognito();
+    initializeS3();
 
-  setReady(true);
+    setReady(true);
 
-  AuthService.getCurrentUser()
-    .then(user => user && console.log('User logged in:', user))
-    .catch(console.error);
-}, []);
-
+    AuthService.getCurrentUser()
+      .then(user => user && console.log('User logged in:', user))
+      .catch(console.error);
+  }, []);
 
   if (!ready) return null;
   return <Component {...pageProps} />;
