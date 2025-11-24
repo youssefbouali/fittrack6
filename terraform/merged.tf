@@ -717,7 +717,7 @@ resource "aws_cloudwatch_dashboard" "fittrack_dashboard" {
 # ========================================
 
 resource "aws_secretsmanager_secret" "fittrack_db" {
-  name        = "${var.app_name}-${var.environment}-db-secret"
+  name        = "${var.app_name}-${var.environment}-db-secret2"
   description = "Database credentials for FitTrack application"
   tags        = var.tags
 }
