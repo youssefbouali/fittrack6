@@ -6,8 +6,8 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  EB_APP_NAME: fittrack-prod3
-  EB_ENV_NAME: fittrack-prod3-env-new
+  EB_APP_NAME: fittrack-prod4
+  EB_ENV_NAME: fittrack-prod4-env-new
   S3_BUCKET: fittrack-frontend-dev-r6modxd4
   CLOUDFRONT_DISTRIBUTION_ID: E238AHI7HD5EMF
 
@@ -78,11 +78,11 @@ jobs:
       # -------------------------
       # Initialize Elastic Beanstalk app (only once)
       # -------------------------
-      - name: Initialize Elastic Beanstalk
-        run: |
-          cd backend
-          eb init -p "Node.js 20 running on 64bit Amazon Linux 2023" ${{ env.EB_APP_NAME }} --region ${{ env.AWS_REGION }}
-          cd ..
+      #- name: Initialize Elastic Beanstalk
+      #  run: |
+      #    cd backend
+      #    eb init -p "Node.js 20 running on 64bit Amazon Linux 2023" ${{ env.EB_APP_NAME }} --region ${{ env.AWS_REGION }}
+      #    cd ..
 
       # -------------------------
       # Deploy backend to Beanstalk
