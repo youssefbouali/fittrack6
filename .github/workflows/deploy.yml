@@ -78,11 +78,11 @@ jobs:
       # -------------------------
       # Initialize Elastic Beanstalk app (only once)
       # -------------------------
-      #- name: Initialize Elastic Beanstalk
-      #  run: |
-      #    cd backend
-      #    eb init -p "Node.js 20 running on 64bit Amazon Linux 2023" ${{ env.EB_APP_NAME }} --region ${{ env.AWS_REGION }}
-      #    cd ..
+      - name: Initialize Elastic Beanstalk
+        run: |
+          cd backend
+          eb init -p "Node.js 20 running on 64bit Amazon Linux 2023" ${{ env.EB_APP_NAME }} --region ${{ env.AWS_REGION }}
+          cd ..
 
       # -------------------------
       # Deploy backend to Beanstalk
