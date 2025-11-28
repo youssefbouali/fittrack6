@@ -1,28 +1,42 @@
-// services/s3Service.ts
-import { getUrl, uploadData, remove } from 'aws-amplify/storage';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { awsConfig } from '../config/aws';
+
+let s3Client: S3Client;
+
+export const initializeS3 = () => {
+  s3Client = new S3Client({
+    region: awsConfig.region,
+  });
+};
+
+const getS3Client = (): S3Client => {
+  if (!s3Client) {
+    initializeS3();
+  }
+  return s3Client;
+};
 
 export const S3Service = {
   async uploadFile(file: File, fileName: string): Promise<{ key: string; url: string }> {
     try {
-      // Upload the file
-      await uploadData({
-        key: fileName,
-        data: file,
-        options: {
-          contentType: file.type,
-          accessLevel: 'guest', // equivalent to 'public' in Gen 1
-        },
-      }).result;
+      const client = getS3Client();
+      const fileArrayBuffer = await file.arrayBuffer();
 
-      // Get the public URL
-      const { url } = await getUrl({
-        key: fileName,
-        options: { accessLevel: 'guest' },
+      const command = new PutObjectCommand({
+        Bucket: awsConfig.s3Bucket,
+        Key: fileName,
+        Body: new Uint8Array(fileArrayBuffer),
+        ContentType: file.type,
+        ACL: 'public-read',
       });
 
+      await client.send(command);
+
+      const url = await S3Service.getFileUrl(fileName);
       return {
         key: fileName,
-        url: url.toString(),
+        url,
       };
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -30,13 +44,16 @@ export const S3Service = {
     }
   },
 
-  async getFileUrl(key: string): Promise<string> {
+  async getFileUrl(key: string, expiresIn: number = 3600): Promise<string> {
     try {
-      const { url } = await getUrl({
-        key,
-        options: { accessLevel: 'guest' },
+      const client = getS3Client();
+      const command = new GetObjectCommand({
+        Bucket: awsConfig.s3Bucket,
+        Key: key,
       });
-      return url.toString();
+
+      const url = await getSignedUrl(client, command, { expiresIn });
+      return url;
     } catch (error) {
       console.error('Error getting file URL:', error);
       throw error;
@@ -45,7 +62,13 @@ export const S3Service = {
 
   async deleteFile(key: string): Promise<void> {
     try {
-      await remove({ key, options: { accessLevel: 'guest' } });
+      const client = getS3Client();
+      const command = new DeleteObjectCommand({
+        Bucket: awsConfig.s3Bucket,
+        Key: key,
+      });
+
+      await client.send(command);
     } catch (error) {
       console.error('Error deleting file:', error);
       throw error;

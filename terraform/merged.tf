@@ -1,5 +1,5 @@
 # ========================================
-# merged.tf – FitTrack Infrastructure (كامل + مُصحح 100%)
+# merged.tf – FitTrack Infrastructure
 # ========================================
 terraform {
   required_version = ">= 1.0"
@@ -116,6 +116,19 @@ resource "aws_s3_bucket" "frontend" {
   tags   = var.tags
 }
 
+resource "aws_s3_bucket_website_configuration" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
+  }
+}
+
+
 resource "aws_s3_bucket_versioning" "frontend" {
   bucket = aws_s3_bucket.frontend.id
   versioning_configuration {
@@ -125,10 +138,10 @@ resource "aws_s3_bucket_versioning" "frontend" {
 
 resource "aws_s3_bucket_public_access_block" "frontend" {
   bucket                  = aws_s3_bucket.frontend.id
-  block_public_acls       = true
-  block_public_policy     = true
+  block_public_acls       = false
+  block_public_policy     = false
   ignore_public_acls      = true
-  restrict_public_buckets = true
+  restrict_public_buckets = false
 }
 
 resource "aws_s3_bucket" "activity_photos" {
@@ -605,16 +618,132 @@ resource "aws_s3_bucket_policy" "frontend" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Sid       = "AllowCloudFront"
+      #Sid       = "AllowCloudFront"
       Effect    = "Allow"
-      Principal = { Service = "cloudfront.amazonaws.com" }
+      #Principal = { Service = "cloudfront.amazonaws.com" }
+      Principal = "*"
       Action    = "s3:GetObject"
       Resource  = "${aws_s3_bucket.frontend.arn}/*"
-      Condition = { StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.frontend.arn } }
+      #Condition = { StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.frontend.arn } }
     }]
   })
   depends_on = [aws_cloudfront_distribution.frontend]
 }
+
+
+
+
+
+
+
+# ========================================
+# CloudWatch - Logging & Monitoring
+# ========================================
+
+# Log Group
+resource "aws_cloudwatch_log_group" "fittrack_app" {
+  name              = "/fittrack/app"
+  retention_in_days = 30
+  tags              = var.tags
+}
+
+# Log Stream
+resource "aws_cloudwatch_log_stream" "fittrack_app_stream" {
+  name           = "app-stream"
+  log_group_name = aws_cloudwatch_log_group.fittrack_app.name
+}
+
+# Metric Alarm - EC2 CPU High
+resource "aws_cloudwatch_metric_alarm" "eb_high_cpu" {
+  alarm_name          = "${var.app_name}-${var.environment}-EB-High-CPU"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 70
+  alarm_description   = "Alarm if CPU > 70% for 10 minutes"
+  dimensions = {
+    InstanceId = aws_elastic_beanstalk_environment.fittrack.id
+  }
+  alarm_actions       = [] # ضع هنا ARN لـ SNS إذا أردت إشعارات
+  ok_actions          = []
+}
+
+# CloudWatch Dashboard
+resource "aws_cloudwatch_dashboard" "fittrack_dashboard" {
+  dashboard_name = "${var.app_name}-${var.environment}-dashboard"
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
+        height = 6
+        properties = {
+          metrics = [
+            [ "AWS/EC2", "CPUUtilization", "InstanceId", aws_elastic_beanstalk_environment.fittrack.id ]
+          ]
+          period = 300
+          stat   = "Average"
+          region = var.aws_region
+          title  = "EB EC2 CPU Usage"
+        }
+      },
+      {
+        type   = "log",
+        x      = 0,
+        y      = 7,
+        width  = 12,
+        height = 6,
+        properties = {
+          query = "fields @timestamp, @message | sort @timestamp desc | limit 20"
+          logGroupNames = [aws_cloudwatch_log_group.fittrack_app.name]
+          title = "Recent App Logs"
+        }
+      }
+    ]
+  })
+}
+
+
+
+
+
+# ========================================
+# AWS Secrets Manager - FitTrack Secrets
+# ========================================
+
+resource "aws_secretsmanager_secret" "fittrack_db" {
+  name        = "${var.app_name}-${var.environment}-db-secret2"
+  description = "Database credentials for FitTrack application"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "fittrack_db_version" {
+  secret_id     = aws_secretsmanager_secret.fittrack_db.id
+  secret_string = jsonencode({
+    username = var.db_username
+    password = var.db_password
+    host     = aws_db_instance.fittrack.endpoint
+    port     = 5432
+    dbname   = replace(var.db_name, "-", "_")
+  })
+}
+
+# Output Secret ARN
+output "fittrack_db_secret_arn" {
+  value       = aws_secretsmanager_secret.fittrack_db.arn
+  description = "ARN of the DB Secret in Secrets Manager"
+  sensitive   = true
+}
+
+
+
+
+
 
 # ========================================
 # Outputs
